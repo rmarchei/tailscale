@@ -170,9 +170,11 @@ func NewClient(opts ClientOpts) (*Client, error) {
 	// speaks inside the ts2021 Noise encryption. But Go doesn't know about that,
 	// so we use "SetUnencryptedHTTP2" even though it's actually encrypted.
 	tr.Protocols.SetUnencryptedHTTP2(true)
-	tr.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+	dialNoise := func(ctx context.Context, network, addr string) (net.Conn, error) {
 		return np.dial(ctx)
 	}
+	tr.DialContext = dialNoise
+	tr.DialTLSContext = dialNoise
 
 	np.Client = &http.Client{Transport: tr}
 	return np, nil
