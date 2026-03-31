@@ -58,6 +58,12 @@ func SetDisableAndroidBindToActiveNetwork(logf logger.Logf, v bool) {
 	}
 }
 
+var dialerOverride atomic.Pointer[Dialer]
+
+func SetDialerOverride(d Dialer) {
+	dialerOverride.Store(&d)
+}
+
 var disableBindConnToInterface atomic.Bool
 
 // SetDisableBindConnToInterface disables the (normal) behavior of binding
@@ -105,6 +111,11 @@ func NewDialer(logf logger.Logf, netMon *netmon.Monitor) Dialer {
 	if netMon == nil {
 		panic("netns.NewDialer called with nil netMon")
 	}
+
+	if do := dialerOverride.Load(); do != nil {
+		return *do
+	}
+
 	return FromDialer(logf, netMon, &net.Dialer{
 		KeepAlive: netknob.PlatformTCPKeepAlive(),
 	})
